@@ -9,6 +9,8 @@ verify_ssl = true
 peewee = "*"
 pymysql = "*"
 pprint = "*"
+python-daemon = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.5"
