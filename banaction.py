@@ -26,7 +26,8 @@ settings = Settings.get_config(args['config'])
 app = App(settings=settings)
 app.initialize()
 try:
-    app.add_ban(args['jail'], args['ip'])
+    app.add_ban_to_list(args['jail'], args['ip'])
 except IntegrityError as e:
-    print("Exception %s" % str(e))
+    #print("Exception %s" % str(e))
+    # already exists
     sys.exit(1)
