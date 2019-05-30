@@ -9,9 +9,9 @@ from settings import Settings
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--config", required=True,
                     help="config file for this service")
-
 #only parse known args here, as config is always needed
 #args =  vars(ap.parse_args())
+
 args, unknown = ap.parse_known_args()
 args = vars(args)
 
@@ -46,13 +46,13 @@ else:
 
 
 class Banlist(Model):
-    # hostname = CharField(max_length=255)
-    created = DateTimeField(default=datetime.datetime.now)
-    # name = TextField()
-    # protocol = CharField(max_length=16)
-    # port = CharField(max_length=32)
     ip = CharField(max_length=64)
     jail = CharField(max_length=64)
+    created = DateTimeField(default=datetime.datetime.now)
+    # name = TextField()
+    # hostname = CharField(max_length=255)
+    # protocol = CharField(max_length=16)
+    # port = CharField(max_length=32)
 
     class Meta:
         database = db
@@ -77,30 +77,54 @@ class App():
     def close(self):
         db.close()
 
-    def deamon_run(self):
-        print("And I was Runnin' - Forrest Gump")
+    def deamon_run(self, master=False):
         self.readlist()
+
+        if master:
+            self.cleanlist()
+
         time.sleep(self.settings.get('check_interval'))
 
+    # Only read contents that may have changed in interval time
+    # otherwise we keep adding the same ips over and over, which
+    # causes a persistent banning loop
     def readlist(self):
         print("Importing current banlist")
 
         whenTime = datetime.datetime.now() - \
-            datetime.timedelta(seconds=settings.get('findtime'))
+            datetime.timedelta(seconds=settings.get('check_interval'))
 
         query = Banlist.select().where(
             Banlist.created > whenTime
         )
 
         for entry in query:
-            self.ban(entry)
+            self.ban_action(entry.jail, entry.ip)
 
-    ## Not sure if I need this, only if fail2ban won't do local iptables plus our own
-    def ban(self, jail, ip):
-        pprint("fail2ban-client %s set banip %s" % (entry.jail, entry.ip))
+    # Remove entries that should have been picked up by now. So entries that
+    # are 2x as old as the check_interval as other servers will share this db
+    # and may be a few seconds behind.
+    # You only want to run this on a single server, use --master flag to enable
+    def cleanlist(self):
+        print("Cleaning current banlist of stale entries")
+
+        # So 5 second interval, means anything older than 9s
+        # should have been picked up
+        seconds = int(settings.get('check_interval')*2) - 1
+
+        whenTime = datetime.datetime.now() - \
+            datetime.timedelta(seconds=seconds)
+
+        query = Banlist.delete().where(
+            Banlist.created < whenTime
+        ).execute()
+
+    # Not sure if I need this, only if fail2ban won't do local iptables plus our own
+    def ban_action(self, jail, ip):
+        pprint("fail2ban-client %s set banip %s" % (jail, ip))
         # subprocess.check_call("fail2ban-client %s set banip %s" % (entry.jail, entry.ip))
 
-    def add_ban(self, jail, ip):
+    # Add jail and ip to database for sharing with other clients
+    def add_ban_to_list(self, jail, ip):
+        pprint("DB: Added %s (ip) to %s (jail)" % (ip, jail))
         Banlist.create(jail=jail,ip=ip)
-        pprint("DB: Jail: %s | banip %s" % (jail, ip))
-        # subprocess.check_call("fail2ban-client %s set banip %s" % (entry.jail, entry.ip))

@@ -12,6 +12,10 @@ This command adds a jailed ip to the centralized db
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--config", required=True,
                     help="config file for this service")
+
+ap.add_argument("-m", "--master", action="store_true",
+                    help="master is in charge of cleaning old records from database")
+
 args =  vars(ap.parse_args())
 
 settings = Settings.get_config(args['config'])
@@ -22,7 +26,7 @@ app.initialize()
 #infinite loop...
 while (True):
     try:
-        app.deamon_run()
+        app.deamon_run(args['master'])
     except KeyboardInterrupt:
         print("Service was Interrupted by Keyboard or SIG")
         app.close()
