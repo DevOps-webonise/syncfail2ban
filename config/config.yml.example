@@ -3,10 +3,5 @@ db_name: syncfail2ban
 db_host: 10.0.2.2
 db_port: 3306
 db_user: root
-db_pass: s@ndb0x!
+db_pass: password
 check_interval: 5
-findtime: 300
-bantime: 30
-jails:
- - sshd
- - http-dos-check
