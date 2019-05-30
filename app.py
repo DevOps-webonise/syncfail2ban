@@ -119,10 +119,10 @@ class App():
             Banlist.created < whenTime
         ).execute()
 
-    # Not sure if I need this, only if fail2ban won't do local iptables plus our own
+    # Ban imported user
     def ban_action(self, jail, ip):
-        pprint("fail2ban-client %s set banip %s" % (jail, ip))
-        # subprocess.check_call("fail2ban-client %s set banip %s" % (entry.jail, entry.ip))
+        pprint("fail2ban-client set %s banip %s" % (jail, ip))
+        subprocess.call("/usr/bin/fail2ban-client set %s banip %s" % (jail, ip))
 
     # Add jail and ip to database for sharing with other clients
     def add_ban_to_list(self, jail, ip):
