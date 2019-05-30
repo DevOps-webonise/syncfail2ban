@@ -2,7 +2,7 @@
 
 ## Dev Environment
 
-- Install pip and pipenv to install required packages.
+- Install pip and pipenv and run ```pipenv install``` to install required packages.
 - Built using python v3.5
 
 ## Running Commands
