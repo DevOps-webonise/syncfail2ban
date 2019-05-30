@@ -1,10 +1,13 @@
 from pprint import pprint
 from peewee import Model, CharField, DateTimeField, TextField, IntegrityError
-import os, sys,  datetime, time, yaml
-import subprocess
+import sys
 import argparse
 from settings import Settings
 from app import App
+
+"""
+This command adds a jailed ip to the centralized db
+"""
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--config", required=True,
