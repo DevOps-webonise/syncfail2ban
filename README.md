@@ -2,8 +2,16 @@
 
 ## Dev Environment
 
+- Built using python v3.5. So best to alias python, and pip. For example:
+
+```
+#~/.bash_aliases
+alias python='python3.7'
+alias pip='pip3.7'
+```
+
 - Install pip and pipenv and run ```pipenv install``` to install required packages.
-- Built using python v3.5
+
 
 ## Running Commands
 
