@@ -1,0 +1,6 @@
+docutils==0.14
+lockfile==0.12.2
+peewee==3.9.5
+pprint==0.1
+PyMySQL==0.9.3
+PyYAML==5.1
