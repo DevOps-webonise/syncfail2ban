@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
-from peewee import *
 import os, sys,  datetime, time, yaml
+import logging
 import subprocess
-from pprint import pprint
 import argparse
+from peewee import *
+from pprint import pprint
 from settings import Settings
 
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--config", required=True,
@@ -43,7 +45,7 @@ elif settings.get('db_type') == 'postgresql':
             port=settings.get('db_port')
     )
 else:
-    print("Could not determine db_type: %s" % settings.get('db_type'))
+    logging.error("Could not determine db_type: %s" % settings.get('db_type'), "db_type_error")
     sys.exit(1)
 
 
@@ -69,11 +71,7 @@ class App():
         self.settings = settings
 
     def initialize(self):
-        print("Connecting to DB..")
-
         db.connect()
-
-        print("Create tables..")
         db.create_tables([Banlist])
 
     def close(self):
@@ -91,16 +89,21 @@ class App():
     # otherwise we keep adding the same ips over and over, which
     # causes a persistent banning loop
     def readlist(self):
-        print("Importing current banlist")
+        logging.info("Reading list..")
+
+        seconds = int(settings.get('check_interval'))
 
         whenTime = datetime.datetime.now() - \
-            datetime.timedelta(seconds=settings.get('check_interval'))
+            datetime.timedelta(seconds=seconds)
+
+        logging.info("Ban time: %s" % whenTime)
 
         query = Banlist.select().where(
             Banlist.created > whenTime
         )
 
         for entry in query:
+            logging.info("Entry: %s" % (str(entry)))
             self.ban_action(entry.jail, entry.ip)
 
     # Remove entries that should have been picked up by now. So entries that
@@ -108,7 +111,7 @@ class App():
     # and may be a few seconds behind.
     # You only want to run this on a single server, use --master flag to enable
     def cleanlist(self):
-        print("Cleaning current banlist of stale entries")
+        logging.info("Cleaning banlist of stale entries")
 
         # So 5 second interval, means anything older than 9s
         # should have been picked up
@@ -123,10 +126,10 @@ class App():
 
     # Ban imported user
     def ban_action(self, jail, ip):
-        pprint("fail2ban-client set %s banip %s" % (jail, ip))
-	#subprocess.call("/usr/bin/fail2ban-client set %s banip %s" % (jail, ip))
+        logging.info("fail2ban-client set %s banip %s" % (jail, ip))
+        os.system("/usr/bin/fail2ban-client set %s banip %s" % (jail, ip))
 
     # Add jail and ip to database for sharing with other clients
     def add_ban_to_list(self, jail, ip):
-        pprint("DB: Added %s (ip) to %s (jail)" % (ip, jail))
+        logging.info("Added %s (ip) to %s (jail)" % (ip, jail))
         Banlist.create(jail=jail,ip=ip)

@@ -6,7 +6,7 @@ setup(
     url='webonise.com',
     author='Justin Fortier',
     author_email='justin.fortier@weboniselab.com',
-    packages=['lib',],
+    packages=['peewee','pprint', 'pyyaml', 'pymysql'],
     license='Creative Commons Attribution-Noncommercial-Share Alike license',
     long_description=open('README.md').read(),
 )
