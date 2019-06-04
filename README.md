@@ -2,7 +2,7 @@
 
 ## Dev Environment
 
-- Built using python v3.5. So best to alias python, and pip. For example:
+- Tested using python v3.4-3.7. So best to alias python, and pip. For example:
 
 ```
 #~/.bash_aliases
