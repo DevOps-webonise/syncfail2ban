@@ -77,10 +77,10 @@ class App():
     def close(self):
         db.close()
 
-    def deamon_run(self, master=False):
+    def deamon_run(self):
         self.readlist()
 
-        if master:
+        if self.settings.get('master'):
             self.cleanlist()
 
         time.sleep(self.settings.get('check_interval'))
@@ -109,7 +109,8 @@ class App():
     # Remove entries that should have been picked up by now. So entries that
     # are 2x as old as the check_interval as other servers will share this db
     # and may be a few seconds behind.
-    # You only want to run this on a single server, use --master flag to enable
+    # You only want to run this on a single server, use master config attribute
+    # to enable
     def cleanlist(self):
         logging.info("Cleaning banlist of stale entries")
 

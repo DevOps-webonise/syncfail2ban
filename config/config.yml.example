@@ -5,3 +5,4 @@ db_port: 3306
 db_user: root
 db_pass: password
 check_interval: 5
+master: false
