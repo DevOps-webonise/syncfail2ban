@@ -1,3 +1,4 @@
+master: false
 db_type: mysql
 db_name: syncfail2ban
 db_host: 10.0.2.2
@@ -5,4 +6,3 @@ db_port: 3306
 db_user: root
 db_pass: password
 check_interval: 5
-master: false

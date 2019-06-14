@@ -4,6 +4,9 @@ import os, sys,  datetime, time, yaml
 import logging
 import subprocess
 import argparse
+import socket
+import ipaddress
+import re
 from peewee import *
 from pprint import pprint
 from settings import Settings
@@ -13,6 +16,7 @@ logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 ap = argparse.ArgumentParser()
 ap.add_argument("-c", "--config", required=True,
                     help="config file for this service")
+
 #only parse known args here, as config is always needed
 #args =  vars(ap.parse_args())
 
@@ -50,11 +54,11 @@ else:
 
 
 class Banlist(Model):
+    from_hostname = TextField()
     ip = CharField(max_length=64)
     jail = CharField(max_length=64)
     created = DateTimeField(default=datetime.datetime.now)
-    # name = TextField()
-    # hostname = CharField(max_length=255)
+    # since jails should match these rules should be in the jail - omitting for now
     # protocol = CharField(max_length=16)
     # port = CharField(max_length=32)
 
@@ -89,22 +93,19 @@ class App():
     # otherwise we keep adding the same ips over and over, which
     # causes a persistent banning loop
     def readlist(self):
-        logging.info("Reading list..")
-
+        hostname = self.get_hostname()
         seconds = int(settings.get('check_interval'))
 
         whenTime = datetime.datetime.now() - \
             datetime.timedelta(seconds=seconds)
 
-        logging.info("Ban time: %s" % whenTime)
-
         query = Banlist.select().where(
-            Banlist.created > whenTime
+            Banlist.created > whenTime,
+            Banlist.from_hostname != hostname
         )
 
         for entry in query:
-            logging.info("Entry: %s" % (str(entry)))
-            self.ban_action(entry.jail, entry.ip)
+            self.ban_action(entry.jail, entry.ip, hostname)
 
     # Remove entries that should have been picked up by now. So entries that
     # are 2x as old as the check_interval as other servers will share this db
@@ -112,8 +113,6 @@ class App():
     # You only want to run this on a single server, use master config attribute
     # to enable
     def cleanlist(self):
-        logging.info("Cleaning banlist of stale entries")
-
         # So 5 second interval, means anything older than 9s
         # should have been picked up
         seconds = int(settings.get('check_interval')*2) - 1
@@ -127,10 +126,34 @@ class App():
 
     # Ban imported user
     def ban_action(self, jail, ip):
-        logging.info("fail2ban-client set %s banip %s" % (jail, ip))
+
+        ip=self.sanitize_ip(ip)
+        jail=self.sanitize_jail(jail)
+
+        logging.info("syncfail2ban: ran command 'fail2ban-client set %s banip %s'" % (jail, ip))
         os.system("/usr/bin/fail2ban-client set %s banip %s" % (jail, ip))
 
     # Add jail and ip to database for sharing with other clients
     def add_ban_to_list(self, jail, ip):
-        logging.info("Added %s (ip) to %s (jail)" % (ip, jail))
-        Banlist.create(jail=jail,ip=ip)
+        logging.info("syncfail2ban: Added %s (ip) to %s (jail) to database" % (ip, jail))
+        Banlist.create(jail=jail,ip=ip,from_hostname=self.get_hostname())
+
+    def get_hostname(self):
+        return socket.gethostname()
+
+    def sanitize_ip(self, ip):
+        try:
+            ipaddress.ip_address(ip)
+        except Exception as e:
+            return false
+
+        return ip
+
+    def sanitize_jail(jail):
+
+        validjail = re.search("^[a-zA-Z0-9-_]+$", jail)
+
+        if (validjail):
+            return jail
+
+        return false
