@@ -93,8 +93,6 @@ class App():
     # otherwise we keep adding the same ips over and over, which
     # causes a persistent banning loop
     def readlist(self):
-        logging.info("Reading list..")
-
         hostname = self.get_hostname()
         seconds = int(settings.get('check_interval'))
 
@@ -107,7 +105,6 @@ class App():
         )
 
         for entry in query:
-            logging.info("Entry: %s" % (str(entry)))
             self.ban_action(entry.jail, entry.ip, hostname)
 
     # Remove entries that should have been picked up by now. So entries that
