@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from pprint import pprint
+#from pprint import pprint
 from peewee import Model, CharField, DateTimeField, TextField, IntegrityError
 import sys
 import argparse

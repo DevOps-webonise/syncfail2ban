@@ -8,7 +8,7 @@ import socket
 import ipaddress
 import re
 from peewee import *
-from pprint import pprint
+#from pprint import pprint
 from settings import Settings
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
